@@ -28,3 +28,23 @@ theme_override_fonts/font = ExtResource("2_oo0fn")
 theme_override_font_sizes/font_size = 24
 text = "0 km/h
 "
+
+[node name="Score" type="Label" parent="." unique_id=1670872410]
+offset_left = 24.0
+offset_top = 110.0
+offset_right = 79.0
+offset_bottom = 139.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 24
+text = "0 pts"
+
+[node name="Prox" type="Label" parent="." unique_id=1517033792]
+offset_left = 24.0
+offset_top = 144.0
+offset_right = 64.0
+offset_bottom = 171.0
+theme_override_colors/font_color = Color(0.6117647, 0.8, 0.56078434, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22

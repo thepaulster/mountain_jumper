@@ -14,6 +14,8 @@ var distance := 0.0
 # $Distance means "my child node called Distance".
 @onready var distance_label: Label = $Distance
 @onready var speed_label: Label = $Speed
+@onready var score_label: Label = $Score
+@onready var prox_label: Label = $Prox
 
 
 func _process(_delta: float) -> void:
@@ -30,3 +32,14 @@ func _process(_delta: float) -> void:
 	if player.mode == Player.Mode.FLY and not player.crashed:
 		kmh = int(player.speed / PIXELS_PER_METRE * 3.6)
 	speed_label.text = "%d km/h" % kmh
+
+
+	# Score: one point per metre, plus banked points, plus whatever is pending right now.
+	var score := int(distance) + player.trick_points + int(player.prox_pending)
+	score_label.text = "%d pts" % score
+
+	# While skimming the rock, show how long and how much.
+	if player.prox_time > 0.2:
+		prox_label.text = "PROXIMITY %.1f s   +%d" % [player.prox_time, int(player.prox_pending)]
+	else:
+		prox_label.text = ""
