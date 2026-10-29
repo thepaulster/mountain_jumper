@@ -1,10 +1,14 @@
 [gd_scene format=3 uid="uid://dqfwr4actcc7i"]
 
+[ext_resource type="PackedScene" uid="uid://box60ohvylpoq" path="res://scenes/hud.tscn" id="1_jyhfs"]
 [ext_resource type="Script" uid="uid://dekc3hl4gjm14" path="res://scripts/terrain.gd" id="1_sugp2"]
 [ext_resource type="PackedScene" uid="uid://bvot44bdl5k3v" path="res://scenes/player.tscn" id="2_jyhfs"]
 [ext_resource type="Script" uid="uid://dxwjl1ownr0df" path="res://scripts/camera.gd" id="3_tbgi4"]
 
 [node name="Main" type="Node2D" unique_id=1890903739]
+
+[node name="HUD" parent="." unique_id=1520044802 node_paths=PackedStringArray("player") instance=ExtResource("1_jyhfs")]
+player = NodePath("../Player")
 
 [node name="Terrain" type="Node2D" parent="." unique_id=1332423959 node_paths=PackedStringArray("player")]
 script = ExtResource("1_sugp2")

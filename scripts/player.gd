@@ -36,6 +36,11 @@ const STALL_NOSE := 1.2
 const STALL_DROP := 3.0
 # ...and you fall this much extra.
 const STALL_SINK := 260.0
+# --- Proximity scoring ---
+# Closer than this to the ground (pixels) counts as proximity flying.
+const PROX_RANGE := 75.0
+# Points per second at the edge of the range (double when almost touching).
+const PROX_POINTS := 90.0
 
 # Are we stalled right now?
 var stalled := false
@@ -57,7 +62,9 @@ const FALL_TIME := 0.75
 # Free fall movement (we don't use speed and angle until the suit opens).
 var fall_velocity := Vector2.ZERO
 var fall_timer := 0.0
-
+var trick_points := 0      # points that are safely banked
+var prox_time := 0.0       # how long the current close pass has lasted (seconds)
+var prox_pending := 0.0    # points from the current close pass, not banked yet
 
 
 func _physics_process(delta: float) -> void:
@@ -131,6 +138,9 @@ func _physics_process(delta: float) -> void:
 				crash()
 				return
 
+	# Score points for flying close to the ground.
+	if terrain != null:
+		update_proximity(delta)
 	# Point the icon the way we are flying.
 	rotation = angle
 
@@ -165,3 +175,23 @@ func free_fall(delta: float) -> void:
 		mode = Mode.FLY
 		speed = maxf(420.0, fall_velocity.length())                  # keep the speed we built up
 		angle = clampf(fall_velocity.angle(), 0.3, 1.2)              # start flying the way we were falling
+
+
+
+func update_proximity(delta: float) -> void:
+	# How far is the ground below us? (Ground y minus our y.)
+	var gap := terrain.floor_at(position.x) - position.y
+
+	if gap < PROX_RANGE:
+		# Close to the rock: the timer runs and points pile up.
+		prox_time += delta
+		# closeness goes from 1.0 (edge of the range) to 2.0 (touching).
+		var closeness := 1.0 + (PROX_RANGE - gap) / PROX_RANGE
+		prox_pending += PROX_POINTS * closeness * delta
+	elif prox_time > 0.0:
+		# We just pulled away: bank the points, then reset for the next pass.
+		trick_points += int(prox_pending)
+		prox_time = 0.0
+		prox_pending = 0.0
+
+

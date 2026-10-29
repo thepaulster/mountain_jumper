@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://box60ohvylpoq"]
+
+[ext_resource type="Script" uid="uid://b760dvvyaonek" path="res://scripts/hud.gd" id="1_ahhtf"]
+[ext_resource type="FontFile" uid="uid://onpj6tpcqc2p" path="res://assets/fonts/BigShoulders-Black.ttf" id="2_oo0fn"]
+
+[node name="HUD" type="CanvasLayer" unique_id=1520044802]
+script = ExtResource("1_ahhtf")
+
+[node name="Distance" type="Label" parent="." unique_id=1197968829]
+offset_left = 24.0
+offset_top = 16.0
+offset_right = 49.0
+offset_bottom = 39.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_fonts/font = ExtResource("2_oo0fn")
+theme_override_font_sizes/font_size = 48
+text = "0m"
+
+[node name="Speed" type="Label" parent="." unique_id=713919542]
+offset_left = 24.0
+offset_top = 76.0
+offset_right = 106.0
+offset_bottom = 147.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = ExtResource("2_oo0fn")
+theme_override_font_sizes/font_size = 24
+text = "0 km/h
+"
