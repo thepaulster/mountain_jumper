@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://dqfwr4actcc7i"]
+
+[ext_resource type="Script" uid="uid://dekc3hl4gjm14" path="res://scripts/terrain.gd" id="1_sugp2"]
+[ext_resource type="PackedScene" uid="uid://bvot44bdl5k3v" path="res://scenes/player.tscn" id="2_jyhfs"]
+[ext_resource type="Script" uid="uid://dxwjl1ownr0df" path="res://scripts/camera.gd" id="3_tbgi4"]
+
+[node name="Main" type="Node2D" unique_id=1890903739]
+
+[node name="Terrain" type="Node2D" parent="." unique_id=1332423959 node_paths=PackedStringArray("player")]
+script = ExtResource("1_sugp2")
+player = NodePath("../Player")
+
+[node name="Player" parent="." unique_id=441130122 node_paths=PackedStringArray("terrain") instance=ExtResource("2_jyhfs")]
+position = Vector2(-40, -26)
+terrain = NodePath("../Terrain")
+
+[node name="Camera" type="Camera2D" parent="." unique_id=1160761921 node_paths=PackedStringArray("target")]
+process_callback = 0
+position_smoothing_enabled = true
+script = ExtResource("3_tbgi4")
+target = NodePath("../Player")
