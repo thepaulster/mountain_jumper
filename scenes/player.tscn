@@ -5,6 +5,7 @@
 
 [node name="Player" type="Node2D" unique_id=441130122]
 script = ExtResource("1_g2els")
+angle = 0.4
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1840518407]
 scale = Vector2(0.4, 0.4)

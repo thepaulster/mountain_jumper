@@ -16,6 +16,7 @@ player = NodePath("../Player")
 
 [node name="Player" parent="." unique_id=441130122 node_paths=PackedStringArray("terrain") instance=ExtResource("2_jyhfs")]
 position = Vector2(-40, -26)
+angle = 0.4
 terrain = NodePath("../Terrain")
 
 [node name="Camera" type="Camera2D" parent="." unique_id=1160761921 node_paths=PackedStringArray("target")]

@@ -1,6 +1,10 @@
 extends Node2D
 class_name Player
 
+
+# Shouted whenever we do a trick. The HUD listens for it.
+signal trick_done(trick_name: String, points: int)
+
 # Which way the nose points (in radians).
 # 0 = flat to the right. Bigger = nose further down.
 # 0.6 is about 35 degrees down, a gentle glide.
@@ -65,7 +69,17 @@ var fall_timer := 0.0
 var trick_points := 0      # points that are safely banked
 var prox_time := 0.0       # how long the current close pass has lasted (seconds)
 var prox_pending := 0.0    # points from the current close pass, not banked yet
+# --- Loops ---
+const LOOP_POINTS := 200      # points for each full loop
+const LOOP_BOOST := 120.0     # speed added for each full loop
+var loop_turn := 0.0          # how far the nose has turned up in a row (negative = up)
+var loops := 0                # loops this run
 
+# --- Combo ---
+const COMBO_MAX := 8          # highest multiplier
+const COMBO_WINDOW := 3.5     # seconds you have to land the next trick
+var combo := 0                # current multiplier (0 = no combo)
+var combo_timer := 0.0        # seconds since the last trick
 
 func _physics_process(delta: float) -> void:
 	if crashed:
@@ -76,6 +90,8 @@ func _physics_process(delta: float) -> void:
 		if Input.is_action_just_pressed("pull"):    # "just pressed" = the moment you tap
 			jump()
 		return    # standing still: skip all the flying code
+
+	var old_angle := angle    # so we can see how much we turned this beat
 
 	if mode == Mode.FALL:
 		free_fall(delta)
@@ -97,6 +113,21 @@ func _physics_process(delta: float) -> void:
 		var diff := angle_difference(angle, DIVE)
 		angle += clamp(diff, -DROP * delta, DROP * delta)
 	
+	# --- Loop detection ---
+	# Add this beat's turn. minf(0, ...) means turning down undoes progress,
+	# but can never count as "negative progress" toward the next loop.
+	loop_turn = minf(0.0, loop_turn + (angle - old_angle))
+	if loop_turn <= -TAU:            # turned a full circle upward!
+		loop_turn += TAU             # start counting the next one
+		loops += 1
+		speed = minf(MAX_SPEED, speed + LOOP_BOOST)
+		award("LOOP", LOOP_POINTS)    # multiply, bank and shout
+
+	# --- Combo timer ---
+	# Too long without a trick? The combo is lost.
+	combo_timer += delta
+	if combo_timer > COMBO_WINDOW:
+		combo = 0
 
 	# How much the nose points down: +1 straight down, -1 straight up, 0 level.
 	var down := sin(angle)
@@ -134,7 +165,7 @@ func _physics_process(delta: float) -> void:
 	var tail := position - forward * 20.0
 	if terrain != null:
 		for point in [nose, position, tail]:
-			if point.y > terrain.floor_at(point.x):
+			if point.y > terrain.floor_at(point.x) or point.y < terrain.ceil_at(point.x):
 				crash()
 				return
 
@@ -180,7 +211,10 @@ func free_fall(delta: float) -> void:
 
 func update_proximity(delta: float) -> void:
 	# How far is the ground below us? (Ground y minus our y.)
-	var gap := terrain.floor_at(position.x) - position.y
+	var gap_below := terrain.floor_at(position.x) - position.y    # ground below us
+	var gap_above = position.y - terrain.ceil_at(position.x)     # roof above us (huge if none)
+	var gap_island := terrain.island_gap(position)                # nearest floating mountain
+	var gap := minf(minf(gap_below, gap_above), gap_island)       # whichever is closest
 
 	if gap < PROX_RANGE:
 		# Close to the rock: the timer runs and points pile up.
@@ -188,10 +222,24 @@ func update_proximity(delta: float) -> void:
 		# closeness goes from 1.0 (edge of the range) to 2.0 (touching).
 		var closeness := 1.0 + (PROX_RANGE - gap) / PROX_RANGE
 		prox_pending += PROX_POINTS * closeness * delta
+		combo_timer = 0.0    # skimming the rock keeps your combo alive
 	elif prox_time > 0.0:
-		# We just pulled away: bank the points, then reset for the next pass.
-		trick_points += int(prox_pending)
+		# We just pulled away: bank the points.
+		if prox_time >= 1.2:
+			# A proper pass counts as a trick: it gets multiplied.
+			award("PROXIMITY %.1f s" % prox_time, int(prox_pending))
+		else:
+			# A tiny touch-and-go: keep the points, but no trick.
+			trick_points += int(prox_pending)
 		prox_time = 0.0
 		prox_pending = 0.0
 
 
+# Every trick goes through here: grow the combo, multiply, bank, shout.
+func award(trick_name: String, points: int) -> void:
+	combo = mini(COMBO_MAX, combo + 1)
+	combo_timer = 0.0
+	var total := points * combo
+	trick_points += total
+	trick_done.emit(trick_name, total)
+	

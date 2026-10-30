@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://bj1icy278fxvo"]
+
+[ext_resource type="Script" uid="uid://d13ymacfb1tt0" path="res://scripts/test_graphics.gd" id="1_ld0ud"]
+
+[node name="TestGraphics" type="Node2D" unique_id=881059925]
+position = Vector2(640, 386)
+script = ExtResource("1_ld0ud")
+tree_type = 4
