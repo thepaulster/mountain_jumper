@@ -45,6 +45,14 @@ const STALL_SINK := 260.0
 const PROX_RANGE := 75.0
 # Points per second at the edge of the range (double when almost touching).
 const PROX_POINTS := 90.0
+# --- Deep dive ---
+# Keep your finger off and the nose keeps tipping down, past the normal glide.
+# Set DEEP_DIVE to false to switch it off.
+const DEEP_DIVE := true
+const DIVE_MAX := 1.22      # steepest dive, about 70 degrees down
+const DIVE_DELAY := 0.6     # seconds of letting go before the nose tips further
+const DIVE_RAMP := 1.3      # seconds to go from the normal glide to the steepest dive
+
 
 # Are we stalled right now?
 var stalled := false
@@ -80,6 +88,7 @@ const COMBO_MAX := 8          # highest multiplier
 const COMBO_WINDOW := 3.5     # seconds you have to land the next trick
 var combo := 0                # current multiplier (0 = no combo)
 var combo_timer := 0.0        # seconds since the last trick
+var release_time := 0.0     # how long since you let go
 
 func _physics_process(delta: float) -> void:
 	if crashed:
@@ -110,9 +119,15 @@ func _physics_process(delta: float) -> void:
 	else:
 		# Not holding: swing the nose back toward the glide angle,
 		# but only a little each beat, so it feels smooth.
-		var diff := angle_difference(angle, DIVE)
+		var diff := angle_difference(angle, dive_target())
 		angle += clamp(diff, -DROP * delta, DROP * delta)
 	
+	# Count how long the button has been let go (back to 0 while holding).
+	if Input.is_action_pressed("pull"):
+		release_time = 0.0
+	else:
+		release_time += delta
+
 	# --- Loop detection ---
 	# Add this beat's turn. minf(0, ...) means turning down undoes progress,
 	# but can never count as "negative progress" toward the next loop.
@@ -165,7 +180,7 @@ func _physics_process(delta: float) -> void:
 	var tail := position - forward * 20.0
 	if terrain != null:
 		for point in [nose, position, tail]:
-			if point.y > terrain.floor_at(point.x) or point.y < terrain.ceil_at(point.x):
+			if point.y > terrain.floor_at(point.x) or point.y < terrain.ceil_at(point.x) or terrain.hits_island(point):
 				crash()
 				return
 
@@ -242,4 +257,13 @@ func award(trick_name: String, points: int) -> void:
 	var total := points * combo
 	trick_points += total
 	trick_done.emit(trick_name, total)
-	
+
+
+# Where the nose settles when you're not holding.
+func dive_target() -> float:
+	if not DEEP_DIVE:
+		return DIVE    # deep dive switched off: always the normal glide
+	# 0 until DIVE_DELAY has passed, then rising to 1 over DIVE_RAMP seconds.
+	var t := (release_time - DIVE_DELAY) / DIVE_RAMP
+	# smoothstep turns that into a gentle S-curve and keeps it between 0 and 1.
+	return lerpf(DIVE, DIVE_MAX, smoothstep(0.0, 1.0, t))
