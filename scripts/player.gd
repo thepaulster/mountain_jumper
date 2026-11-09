@@ -18,6 +18,16 @@ const PULL := 3.6
 const DROP := 2.4
 # Where the nose settles when you are not holding (about 35 degrees down).
 const DIVE := 0.6
+
+# --- Deep dive ---
+# Keep your finger off and the nose keeps tipping down, past the normal glide.
+# Set DEEP_DIVE to false to switch it off.
+const DEEP_DIVE := true
+const DIVE_MAX := 1.0      # 1.22 steepest dive, about 70 degrees down
+const DIVE_DELAY := 0.6     # seconds of letting go before the nose tips further
+const DIVE_RAMP := 1.3      # seconds to go from the normal glide to the steepest dive
+var release_time := 0.0     # how long since you let go
+
 # Speed gained per second when pointing straight down.
 const DIVE_PUSH := 950.0
 # Speed lost per second when pointing straight up.
@@ -45,14 +55,6 @@ const STALL_SINK := 260.0
 const PROX_RANGE := 75.0
 # Points per second at the edge of the range (double when almost touching).
 const PROX_POINTS := 90.0
-# --- Deep dive ---
-# Keep your finger off and the nose keeps tipping down, past the normal glide.
-# Set DEEP_DIVE to false to switch it off.
-const DEEP_DIVE := true
-const DIVE_MAX := 1.22      # steepest dive, about 70 degrees down
-const DIVE_DELAY := 0.6     # seconds of letting go before the nose tips further
-const DIVE_RAMP := 1.3      # seconds to go from the normal glide to the steepest dive
-
 
 # Are we stalled right now?
 var stalled := false
@@ -88,7 +90,19 @@ const COMBO_MAX := 8          # highest multiplier
 const COMBO_WINDOW := 3.5     # seconds you have to land the next trick
 var combo := 0                # current multiplier (0 = no combo)
 var combo_timer := 0.0        # seconds since the last trick
-var release_time := 0.0     # how long since you let go
+
+# --- Cowries ---
+var cowries := 0              # shells collected this run
+
+# --- Sounds (the players live under Sounds in player.tscn) ---
+@onready var sfx_jump: AudioStreamPlayer = $Sounds/Jump
+@onready var sfx_suit: AudioStreamPlayer = $Sounds/Suit
+@onready var sfx_coin: AudioStreamPlayer = $Sounds/Coin
+@onready var sfx_trick: AudioStreamPlayer = $Sounds/Trick
+@onready var sfx_stall: AudioStreamPlayer = $Sounds/Stall
+@onready var sfx_crash: AudioStreamPlayer = $Sounds/Crash
+@onready var sfx_wind: AudioStreamPlayer = $Sounds/Wind
+
 
 func _physics_process(delta: float) -> void:
 	if crashed:
@@ -117,11 +131,11 @@ func _physics_process(delta: float) -> void:
 		# Holding: tip the nose up. Smaller angle = nose higher.
 		angle -= PULL * delta
 	else:
-		# Not holding: swing the nose back toward the glide angle,
+		# Not holding: swing the nose back toward the glide (or deep dive) angle,
 		# but only a little each beat, so it feels smooth.
 		var diff := angle_difference(angle, dive_target())
 		angle += clamp(diff, -DROP * delta, DROP * delta)
-	
+
 	# Count how long the button has been let go (back to 0 while holding).
 	if Input.is_action_pressed("pull"):
 		release_time = 0.0
@@ -164,6 +178,7 @@ func _physics_process(delta: float) -> void:
 	# Too slow? Stall.
 	if not stalled and speed < STALL_SPEED:
 		stalled = true
+		sfx_stall.play()
 
 	# Turn the angle into a direction arrow, then make it as long as our speed.
 	var velocity := Vector2(cos(angle), sin(angle)) * speed
@@ -174,7 +189,7 @@ func _physics_process(delta: float) -> void:
 
 	# Move a little bit along that arrow this frame.
 	position += velocity * delta
-	# Did any part of us touch the ground?
+	# Did any part of us touch the ground, the roof or a floating mountain?
 	var forward := Vector2(cos(angle), sin(angle))    # an arrow pointing where the nose points
 	var nose := position + forward * 20.0
 	var tail := position - forward * 20.0
@@ -193,9 +208,13 @@ func _physics_process(delta: float) -> void:
 	# Turn red while stalled so we can see it (just for testing).
 	modulate = Color(1, 0.4, 0.4) if stalled else Color.WHITE
 
+	update_wind()
+
 
 func crash() -> void:
 	crashed = true
+	sfx_crash.play()
+	update_wind()                      # crashed: the wind goes quiet
 	modulate = Color(0.3, 0.3, 0.3)    # go grey so we can see the crash
 	# Wait one second, then restart the whole level.
 	await get_tree().create_timer(1.0).timeout
@@ -206,6 +225,7 @@ func jump() -> void:
 	mode = Mode.FALL
 	fall_velocity = Vector2(330, -300)    # leap forward (right) and a little up
 	fall_timer = 0.0
+	sfx_jump.play()
 
 
 func free_fall(delta: float) -> void:
@@ -221,13 +241,13 @@ func free_fall(delta: float) -> void:
 		mode = Mode.FLY
 		speed = maxf(420.0, fall_velocity.length())                  # keep the speed we built up
 		angle = clampf(fall_velocity.angle(), 0.3, 1.2)              # start flying the way we were falling
-
+		sfx_suit.play()
 
 
 func update_proximity(delta: float) -> void:
 	# How far is the ground below us? (Ground y minus our y.)
 	var gap_below := terrain.floor_at(position.x) - position.y    # ground below us
-	var gap_above = position.y - terrain.ceil_at(position.x)     # roof above us (huge if none)
+	var gap_above := position.y - terrain.ceil_at(position.x)     # roof above us (huge if none)
 	var gap_island := terrain.island_gap(position)                # nearest floating mountain
 	var gap := minf(minf(gap_below, gap_above), gap_island)       # whichever is closest
 
@@ -257,6 +277,7 @@ func award(trick_name: String, points: int) -> void:
 	var total := points * combo
 	trick_points += total
 	trick_done.emit(trick_name, total)
+	sfx_trick.play()
 
 
 # Where the nose settles when you're not holding.
@@ -267,3 +288,19 @@ func dive_target() -> float:
 	var t := (release_time - DIVE_DELAY) / DIVE_RAMP
 	# smoothstep turns that into a gentle S-curve and keeps it between 0 and 1.
 	return lerpf(DIVE, DIVE_MAX, smoothstep(0.0, 1.0, t))
+
+
+# A cowrie calls this when we fly into it.
+func collect_cowrie() -> void:
+	cowries += 1
+	sfx_coin.pitch_scale = randf_range(0.95, 1.1)    # tiny variety so it never sounds robotic
+	sfx_coin.play()
+
+
+# The wind gets louder the faster we fly, and goes silent when we're not flying.
+func update_wind() -> void:
+	var loud := 0.0
+	if mode == Mode.FLY and not crashed:
+		loud = clampf((speed - 250.0) / 900.0, 0.0, 1.0)    # 0 when slow, 1 near top speed
+	# Sound volume is measured in decibels, so we convert from 0..1.
+	sfx_wind.volume_db = linear_to_db(maxf(loud, 0.001))

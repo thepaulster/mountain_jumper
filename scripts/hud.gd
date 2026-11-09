@@ -2,6 +2,8 @@ extends CanvasLayer
 
 # The flyer whose numbers we show. Plug it in from the Inspector.
 @export var player: Player
+# The eagle, so we can warn about it. Plug it in from the Inspector.
+@export var eagle: Eagle
 
 # 14 pixels in the game = 1 metre in real life.
 const PIXELS_PER_METRE := 14.0
@@ -24,6 +26,8 @@ var trick_timer := 0.0
 @onready var prox_label: Label = $Prox
 @onready var trick_label: Label = $Trick
 @onready var combo_label: Label = $Combo
+@onready var cowrie_label: Label = $Cowries
+@onready var eagle_label: Label = $EagleWarning
 
 func _ready() -> void:
 	# Start listening: whenever the flyer shouts trick_done, run show_trick.
@@ -49,6 +53,16 @@ func _process(delta: float) -> void:
 	# Score: one point per metre, plus banked points, plus whatever is pending right now.
 	var score := int(distance) + player.trick_points + int(player.prox_pending)
 	score_label.text = "%d pts" % score
+
+	cowrie_label.text = "%d cowries" % player.cowries
+
+
+	# Warn while the eagle is hunting, with how far away it is.
+	if eagle != null and eagle.state == Eagle.State.HUNT:
+		var eagle_m := int(eagle.global_position.distance_to(player.global_position) / PIXELS_PER_METRE)
+		eagle_label.text = "CROWNED EAGLE  %d m  ·  dive, or lose it in a cave" % eagle_m
+	else:
+		eagle_label.text = ""
 
 	# While skimming the rock, show how long and how much.
 	if player.prox_time > 0.2:
@@ -76,5 +90,5 @@ func show_trick(trick_name: String, points: int) -> void:
 		trick_label.text = "%s\n+%d  ×%d" % [trick_name, points, player.combo]
 	else:
 		trick_label.text = "%s\n+%d" % [trick_name, points]    # \n = new line
-		
+
 	trick_timer = TRICK_SHOW_TIME

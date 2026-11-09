@@ -2,7 +2,7 @@ extends Node2D
 class_name Terrain
 
 # The flyer. We need it to know when to build more mountain.
-@export var player: Node2D
+@export var player: Player
 
 # Distance between the points along the slope (pixels).
 const STEP := 16.0
@@ -85,16 +85,20 @@ func add_random_chunk() -> void:
 
 	match kind:
 		"open":
-			add_chunk(kind, randf_range(800, 1400), randf_range(0.5, 0.75), randf_range(15, 35))
+			var chunk := add_chunk(kind, randf_range(800, 1400), randf_range(0.5, 0.75), randf_range(15, 35))
+			if randf() < 0.6:
+				cowries_along_floor(chunk, 58.0)    # a line just above the ground: skim it!
 		"overhang":
-			#                 length                  grade                    hills                 gap                   wobble ramp_in ramp_out
-			add_chunk(kind, randf_range(750, 1100), randf_range(0.45, 0.62), randf_range(10, 22), randf_range(210, 265), 20.0, 0.28, 0.25)
+			#                             length                  grade                    hills                 gap                   wobble ramp_in ramp_out
+			var chunk := add_chunk(kind, randf_range(750, 1100), randf_range(0.45, 0.62), randf_range(10, 22), randf_range(210, 265), 20.0, 0.28, 0.25)
+			cowries_in_gap(chunk, 0.32, 0.7, 60.0)     # under the overhang
 		"cave":
-			add_chunk(kind, randf_range(1400, 2200), randf_range(0.36, 0.55), randf_range(40, 72), randf_range(215, 275), 30.0, 0.1, 0.1)
+			var chunk := add_chunk(kind, randf_range(1400, 2200), randf_range(0.36, 0.55), randf_range(40, 72), randf_range(215, 275), 30.0, 0.1, 0.1)
+			cowries_in_gap(chunk, 0.12, 0.88, 80.0)    # all the way through the tunnel
 		"islands":
 			# A calm slope underneath, then a row of floating mountains above it.
 			var chunk := add_chunk(kind, randf_range(1200, 1700), randf_range(0.45, 0.6), randf_range(10, 20))
-			add_islands(chunk)
+			add_islands(chunk)                         # (islands place their own cowries)
 
 	last_kind = kind
 
@@ -229,6 +233,13 @@ func ceil_at(x: float) -> float:
 		return NO_CEILING
 	return sample(ceilings, chunk.start_x, x)
 
+# Is this x deep inside a cave? (Not the open mouth at each end.)
+func is_in_cave(x: float) -> bool:
+	var chunk = chunk_at(x)
+	if chunk == null or chunk.kind != "cave":
+		return false
+	var length: float = chunk.end_x - chunk.start_x
+	return x > chunk.start_x + length * 0.1 and x < chunk.end_x - length * 0.1
 
 # Which piece is at this x? (null if none.)
 func chunk_at(x: float) -> Variant:
@@ -280,7 +291,14 @@ func add_islands(chunk: Dictionary) -> void:
 			rock.add_child(vine)
 
 		chunk.islands.append(shape)    # remember it, so the flyer can hit it
-
+		# Cowries: over the top of low islands, under the spike of high ones.
+		for k in range(-2, 3):                 # 5 shells: -2, -1, 0, 1, 2
+			var cx := center + k * 36.0
+			if high:
+				var tip_y := base.y + depth    # lowest point of the spike
+				add_cowrie(chunk, Vector2(cx, (tip_y + floor_at(cx)) / 2.0))    # halfway between spike and ground
+			else:
+				add_cowrie(chunk, Vector2(cx, shape[5].y - 45.0 + k * k * 5.0)) # a little arch over the top
 		high = not high                          # next one at the other height
 		x += width + randf_range(220.0, 340.0)   # gap before the next island
 
@@ -335,4 +353,34 @@ func island_gap(point: Vector2) -> float:
 			var closest := Geometry2D.get_closest_point_to_segment(point, a, b)
 			best = minf(best, point.distance_to(closest))
 	return best
+
+# Put one cowrie into a piece of mountain.
+func add_cowrie(chunk: Dictionary, pos: Vector2) -> void:
+	var cowrie := Cowrie.new()
+	cowrie.position = pos
+	cowrie.player = player
+	chunk.node.add_child(cowrie)    # lives in the piece, so it's deleted with it
+
+
+# A line of cowries following the ground, "above" pixels over it.
+func cowries_along_floor(chunk: Dictionary, above: float) -> void:
+	var count := randi_range(6, 9)
+	var spacing := 48.0
+	var length: float = chunk.end_x - chunk.start_x
+	var room := maxf(200.0, length - 200.0 - count * spacing)    # don't run off the end
+	var start: float = chunk.start_x + randf_range(200.0, room)
+	for k in count:
+		var x := start + k * spacing
+		add_cowrie(chunk, Vector2(x, floor_at(x) - above))
+
+
+# Cowries down the middle of a tunnel, from "from" to "to" (0 = start, 1 = end).
+func cowries_in_gap(chunk: Dictionary, from: float, to: float, spacing: float) -> void:
+	var length: float = chunk.end_x - chunk.start_x
+	var x: float = chunk.start_x + length * from
+	while x < chunk.start_x + length * to:
+		var roof := ceil_at(x)
+		if roof > NO_CEILING:    # only where there is a roof
+			add_cowrie(chunk, Vector2(x, (floor_at(x) + roof) / 2.0))    # halfway between floor and roof
+		x += spacing
 

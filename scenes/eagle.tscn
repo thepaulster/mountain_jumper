@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://7dvo30mamyv4"]
+
+[ext_resource type="Script" uid="uid://b64iqekurakbc" path="res://scripts/eagle.gd" id="1_2vgvb"]
+
+[node name="Eagle" type="Node2D" unique_id=1503709691]
+script = ExtResource("1_2vgvb")
+
+[node name="Screech" type="AudioStreamPlayer2D" parent="." unique_id=263569556]

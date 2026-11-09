@@ -10,3 +10,22 @@ angle = 0.4
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1840518407]
 scale = Vector2(0.4, 0.4)
 texture = ExtResource("1_3vyb7")
+
+[node name="Sounds" type="Node" parent="." unique_id=1938342672]
+
+[node name="Jump" type="AudioStreamPlayer" parent="Sounds" unique_id=462904779]
+
+[node name="Suit" type="AudioStreamPlayer" parent="Sounds" unique_id=1826166340]
+
+[node name="Coin" type="AudioStreamPlayer" parent="Sounds" unique_id=1579995199]
+max_polyphony = 4
+
+[node name="Trick" type="AudioStreamPlayer" parent="Sounds" unique_id=24816699]
+
+[node name="Stall" type="AudioStreamPlayer" parent="Sounds" unique_id=1645051207]
+
+[node name="Crash" type="AudioStreamPlayer" parent="Sounds" unique_id=217158474]
+
+[node name="Wind" type="AudioStreamPlayer" parent="Sounds" unique_id=118654446]
+volume_db = -80.0
+autoplay = true
