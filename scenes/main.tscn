@@ -13,7 +13,8 @@
 player = NodePath("../Player")
 eagle = NodePath("../Eagle")
 
-[node name="Results" parent="." unique_id=347907637 instance=ExtResource("2_tefeu")]
+[node name="Results" parent="." unique_id=347907637 node_paths=PackedStringArray("player") instance=ExtResource("2_tefeu")]
+player = NodePath("../Player")
 
 [node name="Terrain" type="Node2D" parent="." unique_id=1332423959 node_paths=PackedStringArray("player")]
 script = ExtResource("1_sugp2")
