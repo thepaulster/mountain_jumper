@@ -4,6 +4,7 @@ class_name Player
 
 # Shouted whenever we do a trick. The HUD listens for it.
 signal trick_done(trick_name: String, points: int)
+signal died
 
 # Which way the nose points (in radians).
 # 0 = flat to the right. Bigger = nose further down.
@@ -218,7 +219,7 @@ func crash() -> void:
 	modulate = Color(0.3, 0.3, 0.3)    # go grey so we can see the crash
 	# Wait one second, then restart the whole level.
 	await get_tree().create_timer(1.0).timeout
-	get_tree().reload_current_scene()
+	died.emit()
 
 
 func jump() -> void:
