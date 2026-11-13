@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bq76xfmb2x053" path="res://scripts/results.gd" id="1_21kdr"]
 [ext_resource type="FontFile" uid="uid://onpj6tpcqc2p" path="res://assets/fonts/BigShoulders-Black.ttf" id="1_qh7lt"]
+[ext_resource type="AudioStream" uid="uid://ify6ssbrsmj7" path="res://assets/sounds/coin.wav" id="3_r4wmc"]
 
 [node name="Results" type="CanvasLayer" unique_id=347907637]
 script = ExtResource("1_21kdr")
@@ -54,6 +55,13 @@ layout_mode = 2
 text = "Cowries  0"
 horizontal_alignment = 1
 
+[node name="Total" type="Label" parent="Box/List" unique_id=1588473723]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_qh7lt")
+theme_override_font_sizes/font_size = 36
+text = "SCORE  0"
+horizontal_alignment = 1
+
 [node name="Best" type="Label" parent="Box/List" unique_id=220679679]
 layout_mode = 2
 text = "Best  0 m
@@ -65,3 +73,8 @@ custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "FLY AGAIN"
+
+[node name="Tick" type="AudioStreamPlayer" parent="." unique_id=886706879]
+stream = ExtResource("3_r4wmc")
+volume_db = -8.0
+max_polyphony = 4
