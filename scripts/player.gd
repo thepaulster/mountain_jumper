@@ -5,6 +5,7 @@ class_name Player
 # Shouted whenever we do a trick. The HUD listens for it.
 signal trick_done(trick_name: String, points: int)
 signal died
+signal jumped
 
 # Which way the nose points (in radians).
 # 0 = flat to the right. Bigger = nose further down.
@@ -225,6 +226,7 @@ func crash() -> void:
 func jump() -> void:
 	mode = Mode.FALL
 	fall_velocity = Vector2(330, -300)    # leap forward (right) and a little up
+	jumped.emit()
 	fall_timer = 0.0
 	sfx_jump.play()
 

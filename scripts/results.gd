@@ -1,7 +1,6 @@
 extends CanvasLayer
 
 const PIXELS_PER_METRE := 14.0
-const SAVE_PATH := "user://save.cfg"
 const COWRIE_VALUE := 10                 # NEW: each cowrie is worth 10 points
 
 @export var player: Player
@@ -34,13 +33,11 @@ func show_results() -> void:
 	var cowrie_points := player.cowries * COWRIE_VALUE
 	var total := metres + tricks + cowrie_points
 
-	var best := load_best()
-	var new_best := metres > best
-	if new_best:
-		best = metres
-		save_best(best)
+	if metres > SaveData.best_distance:
+		SaveData.best_distance = metres
+		SaveData.save_game()
 		title_label.text = "NEW BEST!"
-	best_label.text = "Best  %d m" % best
+	best_label.text = "Best  %d m" % SaveData.best_distance
 
 	# Every line starts at zero
 	distance_label.text = "Distance  0 m"
@@ -78,20 +75,6 @@ func show_results() -> void:
 func restart() -> void:
 	get_tree().reload_current_scene()
 
-
-func load_best() -> int:
-	var file := ConfigFile.new()
-	if file.load(SAVE_PATH) != OK:
-		return 0
-	var best: int = file.get_value("records", "best_distance", 0)
-	return best
-
-
-func save_best(metres: int) -> void:
-	var file := ConfigFile.new()
-	file.load(SAVE_PATH)
-	file.set_value("records", "best_distance", metres)
-	file.save(SAVE_PATH)
 
 func count_up(label: Label, format: String, target: int, duration: float) -> void:
 	if target <= 0:                      # nothing to count
