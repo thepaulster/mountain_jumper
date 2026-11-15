@@ -33,7 +33,9 @@ func _ready() -> void:
 	# Start listening: whenever the flyer shouts trick_done, run show_trick.
 	if player != null:
 		player.trick_done.connect(show_trick)
-
+		
+	hide()                       # no numbers on the title screen
+	player.jumped.connect(show)  # they appear the moment you leap
 
 func _process(delta: float) -> void:
 	if player == null:

@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://dequhh7ut3oa8"]
+
+[ext_resource type="Script" uid="uid://cjpxmucwijlbb" path="res://scripts/start_screen.gd" id="1_o7i0r"]
+[ext_resource type="FontFile" uid="uid://onpj6tpcqc2p" path="res://assets/fonts/BigShoulders-Black.ttf" id="1_tx5wa"]
+
+[node name="StartScreen" type="CanvasLayer" unique_id=1904688141]
+script = ExtResource("1_o7i0r")
+
+[node name="List" type="VBoxContainer" parent="." unique_id=730250334]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_top = 80.0
+offset_right = 20.0
+offset_bottom = 148.0
+grow_horizontal = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="List" unique_id=1026008094]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_fonts/font = ExtResource("1_tx5wa")
+theme_override_font_sizes/font_size = 72
+text = "RWENZORI JUMP"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="List" unique_id=1450948645]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 26
+text = "TAP OR PRESS SPACE TO JUMP"
+horizontal_alignment = 1
+
+[node name="Best" type="Label" parent="List" unique_id=502418]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 22
+text = "Best  0 m"
+horizontal_alignment = 1

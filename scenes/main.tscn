@@ -1,17 +1,25 @@
 [gd_scene format=3 uid="uid://dqfwr4actcc7i"]
 
 [ext_resource type="PackedScene" uid="uid://box60ohvylpoq" path="res://scenes/hud.tscn" id="1_jyhfs"]
+[ext_resource type="PackedScene" uid="uid://dequhh7ut3oa8" path="res://scenes/start_screen.tscn" id="1_o6xl0"]
 [ext_resource type="Script" uid="uid://dekc3hl4gjm14" path="res://scripts/terrain.gd" id="1_sugp2"]
 [ext_resource type="PackedScene" uid="uid://bvot44bdl5k3v" path="res://scenes/player.tscn" id="2_jyhfs"]
 [ext_resource type="PackedScene" uid="uid://bgvos00cyl4tw" path="res://scenes/results.tscn" id="2_tefeu"]
 [ext_resource type="Script" uid="uid://dxwjl1ownr0df" path="res://scripts/camera.gd" id="3_tbgi4"]
+[ext_resource type="PackedScene" uid="uid://dia7nu1ri8me7" path="res://scenes/pause.tscn" id="3_tipki"]
 [ext_resource type="PackedScene" uid="uid://7dvo30mamyv4" path="res://scenes/eagle.tscn" id="5_tbgi4"]
 
 [node name="Main" type="Node2D" unique_id=1890903739]
 
+[node name="StartScreen" parent="." unique_id=1904688141 node_paths=PackedStringArray("player") instance=ExtResource("1_o6xl0")]
+player = NodePath("../Player")
+
 [node name="HUD" parent="." unique_id=1520044802 node_paths=PackedStringArray("player", "eagle") instance=ExtResource("1_jyhfs")]
 player = NodePath("../Player")
 eagle = NodePath("../Eagle")
+
+[node name="Pause" parent="." unique_id=1747532204 node_paths=PackedStringArray("player") instance=ExtResource("3_tipki")]
+player = NodePath("../Player")
 
 [node name="Results" parent="." unique_id=347907637 node_paths=PackedStringArray("player") instance=ExtResource("2_tefeu")]
 player = NodePath("../Player")

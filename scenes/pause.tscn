@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://dia7nu1ri8me7"]
+
+[ext_resource type="FontFile" uid="uid://onpj6tpcqc2p" path="res://assets/fonts/BigShoulders-Black.ttf" id="1_f1d2v"]
+[ext_resource type="Script" uid="uid://81585fd2x1ok" path="res://scripts/pause.gd" id="1_r8yp4"]
+
+[node name="Pause" type="CanvasLayer" unique_id=1747532204]
+process_mode = 3
+layer = 8
+script = ExtResource("1_r8yp4")
+
+[node name="PauseButton" type="Button" parent="." unique_id=1802806748]
+custom_minimum_size = Vector2(64, 64)
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -88.0
+offset_right = 32.0
+offset_bottom = -80.0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 28
+text = "II"
+
+[node name="Menu" type="ColorRect" parent="." unique_id=2067019650]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5882353)
+
+[node name="Box" type="PanelContainer" parent="Menu" unique_id=843054744]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -22.0
+offset_right = 20.0
+offset_bottom = 22.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="List" type="VBoxContainer" parent="Menu/Box" unique_id=1792863905]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Title" type="Label" parent="Menu/Box/List" unique_id=875276375]
+layout_mode = 2
+theme_override_fonts/font = ExtResource("1_f1d2v")
+theme_override_font_sizes/font_size = 48
+text = "PAUSED"
+horizontal_alignment = 1
+
+[node name="Resume" type="Button" parent="Menu/Box/List" unique_id=2044255486]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "RESUME"
+
+[node name="Restart" type="Button" parent="Menu/Box/List" unique_id=1589926983]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "RESTART"
