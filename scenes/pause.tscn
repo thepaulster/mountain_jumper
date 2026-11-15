@@ -61,6 +61,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 26
 text = "RESUME"
 
+[node name="Sound" type="Button" parent="Menu/Box/List" unique_id=667701032]
+custom_minimum_size = Vector2(0, 64)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "SOUND: ON"
+
 [node name="Restart" type="Button" parent="Menu/Box/List" unique_id=1589926983]
 custom_minimum_size = Vector2(0, 64)
 layout_mode = 2

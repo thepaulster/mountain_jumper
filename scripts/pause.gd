@@ -6,6 +6,7 @@ extends CanvasLayer
 @onready var menu: ColorRect = $Menu
 @onready var resume_button: Button = $Menu/Box/List/Resume
 @onready var restart_button: Button = $Menu/Box/List/Restart
+@onready var sound_button: Button = $Menu/Box/List/Sound
 
 var in_run := false        # only allow pausing while actually flying
 
@@ -22,6 +23,8 @@ func _ready() -> void:
 	restart_button.pressed.connect(restart)
 	player.jumped.connect(start_run)
 	player.died.connect(end_run)
+	sound_button.pressed.connect(toggle_sound)
+	update_sound_label()  
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -45,6 +48,7 @@ func end_run() -> void:
 
 func pause() -> void:
 	get_tree().paused = true                   # freeze the world
+	player.holding = false                     # forget any finger that was down
 	menu.show()
 	pause_button.hide()
 	resume_button.grab_focus()                 # Space or Enter presses Resume
@@ -59,3 +63,13 @@ func resume() -> void:
 func restart() -> void:
 	get_tree().paused = false                  # must unfreeze first, or the new game starts frozen
 	get_tree().reload_current_scene()
+
+func toggle_sound() -> void:
+	SaveData.sound_on = not SaveData.sound_on   # flip it: on becomes off, off becomes on
+	SaveData.apply_sound()
+	SaveData.save_game()                        # remember it for next time
+	update_sound_label()
+
+
+func update_sound_label() -> void:
+	sound_button.text = "SOUND: ON" if SaveData.sound_on else "SOUND: OFF"

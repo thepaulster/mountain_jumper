@@ -96,6 +96,8 @@ var combo_timer := 0.0        # seconds since the last trick
 # --- Cowries ---
 var cowries := 0              # shells collected this run
 
+var holding := false     # is a finger or Space held down right now?
+
 # --- Sounds (the players live under Sounds in player.tscn) ---
 @onready var sfx_jump: AudioStreamPlayer = $Sounds/Jump
 @onready var sfx_suit: AudioStreamPlayer = $Sounds/Suit
@@ -112,9 +114,7 @@ func _physics_process(delta: float) -> void:
 
 	if mode == Mode.LEDGE:
 		rotation = 0.0                              # stand upright
-		if Input.is_action_just_pressed("pull"):    # "just pressed" = the moment you tap
-			jump()
-		return    # standing still: skip all the flying code
+		return    # standing still (jumping happens in _unhandled_input)
 
 	var old_angle := angle    # so we can see how much we turned this beat
 
@@ -129,7 +129,7 @@ func _physics_process(delta: float) -> void:
 		# Fast enough again? Then the suit flies again.
 		if speed > RECOVER_SPEED:
 			stalled = false
-	elif Input.is_action_pressed("pull"):
+	elif holding:
 		# Holding: tip the nose up. Smaller angle = nose higher.
 		angle -= PULL * delta
 	else:
@@ -139,7 +139,7 @@ func _physics_process(delta: float) -> void:
 		angle += clamp(diff, -DROP * delta, DROP * delta)
 
 	# Count how long the button has been let go (back to 0 while holding).
-	if Input.is_action_pressed("pull"):
+	if holding:
 		release_time = 0.0
 	else:
 		release_time += delta
@@ -172,7 +172,7 @@ func _physics_process(delta: float) -> void:
 	speed -= AIR_DRAG * speed * speed * delta
 
 	# Holding the pull costs a little extra speed.
-	if Input.is_action_pressed("pull") and not stalled:
+	if holding and not stalled:
 		speed *= exp(-PULL_DRAG * delta)
 
 	# Keep speed between the slowest and fastest allowed.
@@ -212,6 +212,13 @@ func _physics_process(delta: float) -> void:
 
 	update_wind()
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("pull"):
+		holding = true
+		if mode == Mode.LEDGE and not crashed:
+			jump()                  # the first tap on the ledge jumps
+	elif event.is_action_released("pull"):
+		holding = false
 
 func crash() -> void:
 	crashed = true
