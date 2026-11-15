@@ -2,9 +2,9 @@ extends CanvasLayer
 
 @export var player: Player
 
-@onready var list: VBoxContainer = $List
-@onready var hint: Label = $List/Hint
-@onready var best_label: Label = $List/Best
+@onready var panel: PanelContainer = $Panel
+@onready var best_label: Label = $Panel/List/Best
+@onready var hint: Label = $Panel/List/Hint
 
 var pulse_tween: Tween
 
@@ -15,13 +15,13 @@ func _ready() -> void:
 		return
 
 	if SaveData.best_distance > 0:
-		best_label.text = "Best  %d m" % SaveData.best_distance
+		best_label.text = "Best flight  %d m" % SaveData.best_distance
 	else:
-		best_label.hide()               # very first game: no best yet
+		best_label.text = "First flight. Good luck!"
 
-	player.jumped.connect(leave)        # when the player jumps, run leave
+	player.jumped.connect(leave)
 
-	# Make the hint gently fade in and out, forever
+	# the hint gently breathes so your eye finds it
 	pulse_tween = create_tween().set_loops()
 	pulse_tween.tween_property(hint, "modulate:a", 0.35, 0.7)
 	pulse_tween.tween_property(hint, "modulate:a", 1.0, 0.7)
@@ -30,8 +30,8 @@ func _ready() -> void:
 func leave() -> void:
 	pulse_tween.kill()
 	var tween := create_tween().set_parallel(true)
-	# slide left, speeding up, like scenery you're flying past
-	tween.tween_property(list, "position:x", list.position.x - 1400, 1.2) \
+	# slide off to the right, speeding up
+	tween.tween_property(panel, "position:x", panel.position.x + 520, 0.6) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.tween_property(list, "modulate:a", 0.0, 1.2).set_ease(Tween.EASE_IN)
-	tween.chain().tween_callback(hide)   # after both finish, hide the screen
+	tween.tween_property(panel, "modulate:a", 0.0, 0.6)
+	tween.chain().tween_callback(hide)
