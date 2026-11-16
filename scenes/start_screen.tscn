@@ -25,6 +25,7 @@ offset_right = 20.0
 offset_bottom = -24.0
 grow_horizontal = 0
 grow_vertical = 2
+mouse_filter = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_quiqa")
 
 [node name="List" type="VBoxContainer" parent="Panel" unique_id=730250334]
@@ -55,6 +56,14 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 5
 theme_override_font_sizes/font_size = 18
 text = "Best  flight 0 m"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="Panel/List" unique_id=2092764574]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9490196, 0.75686276, 0.30588236, 1)
+theme_override_fonts/font = ExtResource("1_tx5wa")
+theme_override_font_sizes/font_size = 28
+text = "TAP ANYWHERE TO DIVE"
 horizontal_alignment = 1
 
 [node name="Row" type="HBoxContainer" parent="Panel/List" unique_id=1293478198]

@@ -33,7 +33,7 @@ func _ready() -> void:
 	# Start listening: whenever the flyer shouts trick_done, run show_trick.
 	if player != null:
 		player.trick_done.connect(show_trick)
-		
+
 	hide()                       # no numbers on the title screen
 	player.jumped.connect(show)  # they appear the moment you leap
 
@@ -62,7 +62,7 @@ func _process(delta: float) -> void:
 	# Warn while the eagle is hunting, with how far away it is.
 	if eagle != null and eagle.state == Eagle.State.HUNT:
 		var eagle_m := int(eagle.global_position.distance_to(player.global_position) / PIXELS_PER_METRE)
-		eagle_label.text = "CROWNED EAGLE  %d m  ·  dive, or lose it in a cave" % eagle_m
+		eagle_label.text = "CROWNED EAGLE  %d m  ·  hug the rock, or lose it in a cave" % eagle_m
 	else:
 		eagle_label.text = ""
 

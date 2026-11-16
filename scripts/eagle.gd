@@ -11,13 +11,14 @@ enum State { WAIT, HUNT, LEAVE }
 var state := State.WAIT
 
 const FIRST_WAIT := 14.0          # seconds of flying before it can ever appear
-const HUNT_SPEED := 820.0         # its top speed. Your normal glide is a little faster.
+const HUNT_SPEED := 740.0         # its top speed. Your normal glide is a little faster.
 const TURN := 2.4                 # how sharply it can steer (bigger = sharper)
 const CATCH_RADIUS := 30.0        # this close and it has you
-const GIVE_UP_TIME := 22.0        # it gives up after hunting this long...
+const GIVE_UP_TIME := 14.0        # it gives up after hunting this long...
 const GIVE_UP_DISTANCE := 1600.0  # ...or if you get this far ahead of it
 const ESCAPE_POINTS := 150        # points for escaping
 const CAVE_ESCAPE_POINTS := 250   # more for losing it in a cave
+const GROUND_CLEARANCE := 95.0    # the eagle never flies closer to the ground than this
 
 var velocity := Vector2.ZERO
 var wait_timer := 0.0
@@ -120,7 +121,7 @@ func move(delta: float) -> void:
 	flap += delta * 9.0
 
 	# Don't fly through the mountain.
-	var floor_y := terrain.floor_at(global_position.x) - 30.0
+	var floor_y := terrain.floor_at(global_position.x) - GROUND_CLEARANCE
 	if global_position.y > floor_y:
 		global_position.y = floor_y
 		velocity.y = minf(velocity.y, 0.0)

@@ -20,6 +20,12 @@ const CAVE_BACK_COLOR := Color(0.06, 0.09, 0.08)   # the dark back wall inside c
 const ISLAND_COLOR := Color(0.3, 0.33, 0.42)        # bluish floating rock
 const ISLAND_TOP_COLOR := Color(0.45, 0.75, 0.5)    # mossy green top
 const VINE_COLOR := Color(0.3, 0.55, 0.35)          # hanging vines (just decoration)
+# --- Pacing: calm stretches between hazards ---
+const WARMUP := 6000.0       # the first 6000 px (~430 m) of a run are calm
+const CALM_EASY := 2600.0    # breather length at the start of a run
+const CALM_HARD := 1200.0    # breather length deep into a run
+const HARD_AT := 60000.0     # distance (~4300 m) where breathers reach their shortest
+var need_breather := false   # true after a hazard: the next chunk must be calm
 
 # What ceil_at returns where there is no roof: "very far up".
 const NO_CEILING := -1.0e9
@@ -64,7 +70,7 @@ func _physics_process(_delta: float) -> void:
 
 	# Getting close to the end of the track? Lay more pieces.
 	while end_x < player.position.x + BUILD_AHEAD:
-		add_random_chunk()
+		add_next_chunk()
 
 	# Throw away pieces that are far behind the flyer.
 	while chunks.size() > 2 and chunks[0].end_x < player.position.x - KEEP_BEHIND:
@@ -195,6 +201,30 @@ func add_chunk(kind: String, length: float, grade: float, hills: float,
 	end_y = heights[count]
 	return chunk    # hand the piece back, so add_islands can use it
 
+# Decides what comes next: calm or a hazard.
+func add_next_chunk() -> void:
+	if end_x < WARMUP or need_breather:
+		add_breather()
+		need_breather = false
+	else:
+		add_random_chunk()                         # your existing hazard picker
+		var kind: String = chunks.back().kind      # what did it just build?
+		need_breather = kind != "open"             # a hazard? then calm next time
+
+
+# A gentle open slope with a lazy arc of cowries: a reward for surviving.
+func add_breather() -> void:
+	var d := clampf(end_x / HARD_AT, 0.0, 1.0)     # 0 at the start, 1 deep in the run
+	var length := lerpf(CALM_EASY, CALM_HARD, d)   # long breathers early, short ones later
+	var chunk := add_chunk("open", length, 0.5, 6.0)   # gentle slope, small hills
+
+	var start: float = chunk.start_x
+	var finish: float = chunk.end_x
+	for i in 7:                                    # 7 cowries in a rainbow arc
+		var t := i / 6.0                           # 0.0, 0.17, 0.33 ... 1.0
+		var x := lerpf(start, finish, 0.2 + 0.6 * t)       # across the middle of the slope
+		var lift := 110.0 + sin(t * PI) * 90.0              # higher in the middle of the arc
+		add_cowrie(chunk, Vector2(x, floor_at(x) - lift))
 
 # Small helpers so we don't repeat the same 4 lines everywhere.
 func add_shape(parent: Node, points: PackedVector2Array, color: Color) -> Polygon2D:
