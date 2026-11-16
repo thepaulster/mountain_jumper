@@ -17,14 +17,16 @@ signal jumped
 # How fast holding turns the nose up (radians per second).
 const PULL := 3.6
 # How fast the nose drops back down when you let go.
-const DROP := 2.4
+const DROP := 1.2 #2.4
 # Where the nose settles when you are not holding (about 35 degrees down).
 const DIVE := 0.6
+const PUSH := 2.6           # how fast holding "dive" tips the nose down
+const DIVE_LIMIT := 1.3     # steepest dive you can hold (about 75° down)
 
 # --- Deep dive ---
 # Keep your finger off and the nose keeps tipping down, past the normal glide.
 # Set DEEP_DIVE to false to switch it off.
-const DEEP_DIVE := true
+const DEEP_DIVE := false
 const DIVE_MAX := 1.0      # 1.22 steepest dive, about 70 degrees down
 const DIVE_DELAY := 0.6     # seconds of letting go before the nose tips further
 const DIVE_RAMP := 1.3      # seconds to go from the normal glide to the steepest dive
@@ -98,6 +100,8 @@ var cowries := 0              # shells collected this run
 
 var holding := false     # is a finger or Space held down right now?
 
+var diving := false     # is the dive button held down right now?
+
 # --- Sounds (the players live under Sounds in player.tscn) ---
 @onready var sfx_jump: AudioStreamPlayer = $Sounds/Jump
 @onready var sfx_suit: AudioStreamPlayer = $Sounds/Suit
@@ -132,6 +136,10 @@ func _physics_process(delta: float) -> void:
 	elif holding:
 		# Holding: tip the nose up. Smaller angle = nose higher.
 		angle -= PULL * delta
+	elif diving:
+		# Diving: tip the nose down, but never past DIVE_LIMIT.
+		var down_diff := angle_difference(angle, DIVE_LIMIT)
+		angle += clamp(down_diff, -PUSH * delta, PUSH * delta)
 	else:
 		# Not holding: swing the nose back toward the glide (or deep dive) angle,
 		# but only a little each beat, so it feels smooth.
@@ -215,10 +223,18 @@ func _physics_process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pull"):
 		holding = true
-		if mode == Mode.LEDGE and not crashed:
-			jump()                  # the first tap on the ledge jumps
 	elif event.is_action_released("pull"):
 		holding = false
+	elif event.is_action_pressed("dive"):
+		diving = true
+	elif event.is_action_released("dive"):
+		diving = false
+	else:
+		return                          # some other key: ignore it
+
+	# On the ledge, either control jumps
+	if mode == Mode.LEDGE and not crashed and (holding or diving):
+		jump()
 
 func crash() -> void:
 	crashed = true
