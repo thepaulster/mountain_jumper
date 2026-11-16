@@ -101,6 +101,7 @@ var cowries := 0              # shells collected this run
 var holding := false     # is a finger or Space held down right now?
 
 var diving := false     # is the dive button held down right now?
+var touches := {}        # which finger is on which side: finger number -> "pull" or "dive"
 
 # --- Sounds (the players live under Sounds in player.tscn) ---
 @onready var sfx_jump: AudioStreamPlayer = $Sounds/Jump
@@ -221,7 +222,19 @@ func _physics_process(delta: float) -> void:
 	update_wind()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("pull"):
+	if event is InputEventScreenTouch:
+		# Phone: left half of the screen pulls up, right half dives.
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			var half := get_viewport().get_visible_rect().size.x / 2.0
+			touches[touch.index] = "pull" if touch.position.x < half else "dive"
+		else:
+			touches.erase(touch.index)                 # that finger lifted off
+		holding = touches.values().has("pull")
+		diving = touches.values().has("dive")
+	elif event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
+		return                                         # a pretend click made from a touch: already handled above
+	elif event.is_action_pressed("pull"):
 		holding = true
 	elif event.is_action_released("pull"):
 		holding = false
@@ -230,9 +243,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_released("dive"):
 		diving = false
 	else:
-		return                          # some other key: ignore it
+		return                                         # some other key: ignore it
 
-	# On the ledge, either control jumps
+	# On the ledge, any control jumps
 	if mode == Mode.LEDGE and not crashed and (holding or diving):
 		jump()
 

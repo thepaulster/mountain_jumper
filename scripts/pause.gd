@@ -50,6 +50,7 @@ func pause() -> void:
 	get_tree().paused = true                   # freeze the world
 	player.holding = false                     # forget any finger that was down
 	player.diving = false
+	player.touches.clear()
 	menu.show()
 	pause_button.hide()
 	resume_button.grab_focus()                 # Space or Enter presses Resume
