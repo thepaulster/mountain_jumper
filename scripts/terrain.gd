@@ -19,6 +19,7 @@ const ROOF_EDGE_COLOR := Color(0.3, 0.4, 0.34)
 const CAVE_BACK_COLOR := Color(0.06, 0.09, 0.08)   # the dark back wall inside caves
 const ISLAND_COLOR := Color(0.3, 0.33, 0.42)        # bluish floating rock
 const ISLAND_TOP_COLOR := Color(0.45, 0.75, 0.5)    # mossy green top
+const SPIRE_COLOR := Color(0.33, 0.27, 0.3)         # dark needle rock
 const VINE_COLOR := Color(0.3, 0.55, 0.35)          # hanging vines (just decoration)
 # --- Pacing: calm stretches between hazards ---
 const WARMUP := 6000.0       # the first 6000 px (~430 m) of a run are calm
@@ -194,18 +195,22 @@ func add_chunk(kind: String, length: float, grade: float, hills: float,
 	var chunk := {
 		"kind": kind, "start_x": end_x, "end_x": last_x,
 		"heights": heights, "ceilings": ceilings, "node": node,
-		"islands": [],    # floating mountains over this piece (filled in by add_islands)
+		"islands": [],    # floating mountains (and spires) over this piece
 	}
 	chunks.append(chunk)
 	end_x = last_x
 	end_y = heights[count]
 	return chunk    # hand the piece back, so add_islands can use it
 
+
 # Decides what comes next: calm or a hazard.
 func add_next_chunk() -> void:
 	if end_x < WARMUP or need_breather:
 		add_breather()
 		need_breather = false
+	elif randf() < 0.3:
+		add_spires()                               # 3 times in 10: a spire group
+		need_breather = true                       # spires are a hazard: calm next
 	else:
 		add_random_chunk()                         # your existing hazard picker
 		var kind: String = chunks.back().kind      # what did it just build?
@@ -225,6 +230,45 @@ func add_breather() -> void:
 		var x := lerpf(start, finish, 0.2 + 0.6 * t)       # across the middle of the slope
 		var lift := 110.0 + sin(t * PI) * 90.0              # higher in the middle of the arc
 		add_cowrie(chunk, Vector2(x, floor_at(x) - lift))
+
+
+# A stretch of gentle slope with 2-4 rock needles to hop over.
+func add_spires() -> void:
+	var d := clampf(end_x / HARD_AT, 0.0, 1.0)          # 0 early in a run, 1 deep in
+	var count := 2 + int(d * 2.0)                       # 2 spires early, up to 4 later
+	var spacing := lerpf(650.0, 480.0, d)               # room to dive back down between them
+	var length := 600.0 + count * spacing
+	var chunk := add_chunk("spires", length, 0.45, 5.0) # gentle slope under them
+
+	var start: float = chunk.start_x
+	for i in count:
+		var x := start + 450.0 + i * spacing + randf_range(-60.0, 60.0)
+		var height := lerpf(140.0, 270.0, d) * randf_range(0.8, 1.2)    # taller later on
+		var poly := make_spire(x, randf_range(50.0, 75.0), height)
+
+		var rock := add_shape(chunk.node, poly, SPIRE_COLOR)
+		add_edge(rock, poly.slice(0, 5), EDGE_COLOR)    # mossy rim up the left side to the tip
+		chunk.islands.append(poly)                      # stored like an island: crash + proximity for free
+
+		add_cowrie(chunk, Vector2(x, floor_at(x) - height - 55.0))     # reward for hopping close
+
+
+# The shape of one needle: wide at the bottom, sharp at the top, a bit jagged.
+func make_spire(x: float, width: float, height: float) -> PackedVector2Array:
+	var base := floor_at(x)
+	var top := base - height
+	var half := width / 2.0
+	return PackedVector2Array([
+		Vector2(x - half, floor_at(x - half) + 25.0),      # sunk into the ground: no gap underneath
+		Vector2(x - half * 0.8, base - height * 0.4),
+		Vector2(x - half * 0.45, base - height * 0.75),
+		Vector2(x - 4.0, top),                              # the tip
+		Vector2(x + 5.0, top + 8.0),
+		Vector2(x + half * 0.5, base - height * 0.7),
+		Vector2(x + half * 0.85, base - height * 0.35),
+		Vector2(x + half, floor_at(x + half) + 25.0),
+	])
+
 
 # Small helpers so we don't repeat the same 4 lines everywhere.
 func add_shape(parent: Node, points: PackedVector2Array, color: Color) -> Polygon2D:
@@ -263,6 +307,7 @@ func ceil_at(x: float) -> float:
 		return NO_CEILING
 	return sample(ceilings, chunk.start_x, x)
 
+
 # Is this x deep inside a cave? (Not the open mouth at each end.)
 func is_in_cave(x: float) -> bool:
 	var chunk = chunk_at(x)
@@ -270,6 +315,7 @@ func is_in_cave(x: float) -> bool:
 		return false
 	var length: float = chunk.end_x - chunk.start_x
 	return x > chunk.start_x + length * 0.1 and x < chunk.end_x - length * 0.1
+
 
 # Which piece is at this x? (null if none.)
 func chunk_at(x: float) -> Variant:
@@ -286,6 +332,7 @@ func sample(values: PackedFloat32Array, start_x: float, x: float) -> float:
 	if i >= values.size() - 1:
 		return values[values.size() - 1]
 	return lerpf(values[i], values[i + 1], f - i)
+
 
 # Place a row of floating mountains over this piece.
 func add_islands(chunk: Dictionary) -> void:
@@ -356,7 +403,8 @@ func make_island(base: Vector2, width: float, depth: float) -> PackedVector2Arra
 
 	return points
 
-# Is this point inside a floating mountain?
+
+# Is this point inside a floating mountain (or a spire)?
 func hits_island(point: Vector2) -> bool:
 	var chunk = chunk_at(point.x)
 	if chunk == null:
@@ -368,7 +416,7 @@ func hits_island(point: Vector2) -> bool:
 	return false
 
 
-# How far is this point from the nearest floating mountain's edge? (Huge if none.)
+# How far is this point from the nearest floating mountain's (or spire's) edge? (Huge if none.)
 func island_gap(point: Vector2) -> float:
 	var best := 1.0e9
 	var chunk = chunk_at(point.x)
@@ -383,6 +431,7 @@ func island_gap(point: Vector2) -> float:
 			var closest := Geometry2D.get_closest_point_to_segment(point, a, b)
 			best = minf(best, point.distance_to(closest))
 	return best
+
 
 # Put one cowrie into a piece of mountain.
 func add_cowrie(chunk: Dictionary, pos: Vector2) -> void:
@@ -413,4 +462,3 @@ func cowries_in_gap(chunk: Dictionary, from: float, to: float, spacing: float) -
 		if roof > NO_CEILING:    # only where there is a roof
 			add_cowrie(chunk, Vector2(x, (floor_at(x) + roof) / 2.0))    # halfway between floor and roof
 		x += spacing
-
