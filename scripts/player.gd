@@ -15,11 +15,11 @@ signal jumped
 @export var terrain:Terrain
 
 # How fast holding turns the nose up (radians per second).
-const PULL := 3.6
+const PULL := 2.8 #3.6
 # How fast the nose drops back down when you let go.
 const DROP := 1.2 #2.4
 # Where the nose settles when you are not holding (about 35 degrees down).
-const DIVE := 0.6
+const DIVE := 0.5  # 0.6
 const PUSH := 2.6           # how fast holding "dive" tips the nose down
 const DIVE_LIMIT := 1.3     # steepest dive you can hold (about 75° down)
 
@@ -35,11 +35,11 @@ var release_time := 0.0     # how long since you let go
 # Speed gained per second when pointing straight down.
 const DIVE_PUSH := 950.0
 # Speed lost per second when pointing straight up.
-const CLIMB_COST := 650.0
+const CLIMB_COST := 500.0 #650.0
 # Air pushing back. The faster you go, the harder it pushes.
 const AIR_DRAG := 0.00075
 # Extra speed lost while holding the pull. Stops endless loops.
-const PULL_DRAG := 0.35
+const PULL_DRAG := 0.22  #0.35
 # Slowest and fastest you can ever go.
 const MIN_SPEED := 60.0
 const MAX_SPEED := 1250.0
@@ -59,6 +59,13 @@ const STALL_SINK := 260.0
 const PROX_RANGE := 75.0
 # Points per second at the edge of the range (double when almost touching).
 const PROX_POINTS := 90.0
+
+# --- Crash tumble ---
+const BOUNCE := 0.35     # how much of a hit bounces back up (0 = thud, 1 = superball)
+const SKID := 0.7        # how much forward speed survives each bounce
+const SPIN := 9.0        # how fast the body spins after a crash (radians per second)
+var tumble_velocity := Vector2.ZERO
+var spin := 0.0
 
 # Are we stalled right now?
 var stalled := false
@@ -115,7 +122,8 @@ var touches := {}        # which finger is on which side: finger number -> "pull
 
 func _physics_process(delta: float) -> void:
 	if crashed:
-		return    # crashed: do nothing until the restart
+		tumble(delta)    # crashed: bounce and roll down the slope
+		return
 
 	if mode == Mode.LEDGE:
 		rotation = 0.0                              # stand upright
@@ -207,7 +215,7 @@ func _physics_process(delta: float) -> void:
 	if terrain != null:
 		for point in [nose, position, tail]:
 			if point.y > terrain.floor_at(point.x) or point.y < terrain.ceil_at(point.x) or terrain.hits_island(point):
-				crash()
+				crash(point.y < terrain.ceil_at(point.x))    # true if we hit a roof
 				return
 
 	# Score points for flying close to the ground.
@@ -249,13 +257,21 @@ func _unhandled_input(event: InputEvent) -> void:
 	if mode == Mode.LEDGE and not crashed and (holding or diving):
 		jump()
 
-func crash() -> void:
+func crash(hit_roof := false) -> void:
+	if crashed:
+		return                       # already crashing: don't crash twice
 	crashed = true
 	sfx_crash.play()
-	update_wind()                      # crashed: the wind goes quiet
-	modulate = Color(0.3, 0.3, 0.3)    # go grey so we can see the crash
-	# Wait one second, then restart the whole level.
-	await get_tree().create_timer(1.0).timeout
+	update_wind()                    # the wind goes quiet
+
+	# Keep part of our flying speed, in the direction we were going.
+	tumble_velocity = Vector2(cos(angle), sin(angle)) * speed * 0.6
+	if hit_roof:
+		tumble_velocity.y = absf(tumble_velocity.y) + 150.0    # knocked down off the roof
+	spin = SPIN if tumble_velocity.x >= 0.0 else -SPIN
+	speed = 0.0                      # the camera zooms back in, the HUD shows 0 km/h
+
+	await get_tree().create_timer(1.8).timeout    # watch the tumble, then results
 	died.emit()
 
 
@@ -343,3 +359,27 @@ func update_wind() -> void:
 		loud = clampf((speed - 250.0) / 900.0, 0.0, 1.0)    # 0 when slow, 1 near top speed
 	# Sound volume is measured in decibels, so we convert from 0..1.
 	sfx_wind.volume_db = linear_to_db(maxf(loud, 0.001))
+
+func tumble(delta: float) -> void:
+	tumble_velocity.y += GRAVITY * delta     # gravity pulls the body down
+	position += tumble_velocity * delta
+	rotation += spin * delta
+
+	# Hit the ground? Bounce.
+	var ground := terrain.floor_at(position.x) - 12.0    # 12 = about half the body's height
+	if position.y > ground:
+		position.y = ground
+		if tumble_velocity.y > 120.0:                    # a real hit: bounce
+			tumble_velocity.y = -tumble_velocity.y * BOUNCE
+			tumble_velocity.x *= SKID
+			spin *= SKID
+		else:                                            # barely moving: slide to a stop
+			tumble_velocity.y = 0.0
+			tumble_velocity.x *= exp(-3.0 * delta)
+			spin *= exp(-4.0 * delta)
+
+	# Hit a roof while tumbling (inside a cave)? Get knocked back down.
+	var roof := terrain.ceil_at(position.x) + 12.0
+	if position.y < roof:
+		position.y = roof
+		tumble_velocity.y = absf(tumble_velocity.y)

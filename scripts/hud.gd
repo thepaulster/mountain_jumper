@@ -28,6 +28,7 @@ var trick_timer := 0.0
 @onready var combo_label: Label = $Combo
 @onready var cowrie_label: Label = $Cowries
 @onready var eagle_label: Label = $EagleWarning
+@onready var zones: Control = $Zones
 
 func _ready() -> void:
 	# Start listening: whenever the flyer shouts trick_done, run show_trick.
@@ -36,6 +37,8 @@ func _ready() -> void:
 
 	hide()                       # no numbers on the title screen
 	player.jumped.connect(show)  # they appear the moment you leap
+	zones.hide()
+	player.jumped.connect(show_zones)	
 
 func _process(delta: float) -> void:
 	if player == null:
@@ -94,3 +97,11 @@ func show_trick(trick_name: String, points: int) -> void:
 		trick_label.text = "%s\n+%d" % [trick_name, points]    # \n = new line
 
 	trick_timer = TRICK_SHOW_TIME
+
+func show_zones() -> void:
+	zones.show()
+	zones.modulate.a = 1.0
+	var tween := create_tween()
+	tween.tween_interval(3.5)                           # stay for 3.5 seconds
+	tween.tween_property(zones, "modulate:a", 0.0, 1.0) # then fade out over 1 second
+	tween.tween_callback(zones.hide)

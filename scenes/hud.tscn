@@ -6,6 +6,66 @@
 [node name="HUD" type="CanvasLayer" unique_id=1520044802]
 script = ExtResource("1_ahhtf")
 
+[node name="Zones" type="HBoxContainer" parent="." unique_id=344716805]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="PullZone" type="ColorRect" parent="Zones" unique_id=1879431405]
+layout_mode = 2
+size_flags_horizontal = 3
+color = Color(0.5019608, 0.8, 1, 0.09803922)
+
+[node name="PullLabel" type="Label" parent="Zones/PullZone" unique_id=1282794851]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -10.0
+offset_right = 20.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_outline_size = 6
+theme_override_fonts/font = ExtResource("2_oo0fn")
+theme_override_font_sizes/font_size = 34
+text = "HOLD ↵ PULL UP"
+horizontal_alignment = 1
+
+[node name="DiveZone" type="ColorRect" parent="Zones" unique_id=377054070]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+color = Color(1, 0.6039216, 0.3019608, 0.09803922)
+
+[node name="DiveLabel" type="Label" parent="Zones/DiveZone" unique_id=1759772829]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -10.0
+offset_right = 20.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_outline_size = 6
+theme_override_fonts/font = ExtResource("2_oo0fn")
+theme_override_font_sizes/font_size = 34
+text = "HOLD ↵ DIVE"
+horizontal_alignment = 1
+
 [node name="Distance" type="Label" parent="." unique_id=1197968829]
 offset_left = 24.0
 offset_top = 16.0
