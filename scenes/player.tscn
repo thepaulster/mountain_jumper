@@ -2,6 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://bc8p404qw0d87" path="res://icon.svg" id="1_3vyb7"]
 [ext_resource type="Script" uid="uid://bjs8osccfvaol" path="res://scripts/player.gd" id="1_g2els"]
+[ext_resource type="AudioStream" uid="uid://cifumf78e3sji" path="res://assets/sounds/thud.wav" id="3_qhqgy"]
 
 [node name="Player" type="Node2D" unique_id=441130122]
 script = ExtResource("1_g2els")
@@ -29,3 +30,7 @@ max_polyphony = 4
 [node name="Wind" type="AudioStreamPlayer" parent="Sounds" unique_id=118654446]
 volume_db = -80.0
 autoplay = true
+
+[node name="Thud" type="AudioStreamPlayer" parent="Sounds" unique_id=447605080]
+stream = ExtResource("3_qhqgy")
+max_polyphony = 3

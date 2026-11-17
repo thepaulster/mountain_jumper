@@ -118,7 +118,7 @@ var touches := {}        # which finger is on which side: finger number -> "pull
 @onready var sfx_stall: AudioStreamPlayer = $Sounds/Stall
 @onready var sfx_crash: AudioStreamPlayer = $Sounds/Crash
 @onready var sfx_wind: AudioStreamPlayer = $Sounds/Wind
-
+@onready var sfx_thud: AudioStreamPlayer = $Sounds/Thud
 
 func _physics_process(delta: float) -> void:
 	if crashed:
@@ -269,11 +269,19 @@ func crash(hit_roof := false) -> void:
 	if hit_roof:
 		tumble_velocity.y = absf(tumble_velocity.y) + 150.0    # knocked down off the roof
 	spin = SPIN if tumble_velocity.x >= 0.0 else -SPIN
+	launch_helmet()
 	speed = 0.0                      # the camera zooms back in, the HUD shows 0 km/h
 
 	await get_tree().create_timer(1.8).timeout    # watch the tumble, then results
 	died.emit()
 
+
+func launch_helmet() -> void:
+	var helmet := Helmet.new()
+	helmet.terrain = terrain
+	helmet.position = position + Vector2(0, -14)
+	helmet.velocity = tumble_velocity * 1.2 + Vector2(60, -320)    # pops up and forward
+	get_parent().add_child.call_deferred(helmet)    # add to Main, not to the player
 
 func jump() -> void:
 	mode = Mode.FALL
@@ -373,6 +381,8 @@ func tumble(delta: float) -> void:
 			tumble_velocity.y = -tumble_velocity.y * BOUNCE
 			tumble_velocity.x *= SKID
 			spin *= SKID
+			sfx_thud.pitch_scale = randf_range(0.85, 1.1)   # each thud sounds a bit different
+			sfx_thud.play()
 		else:                                            # barely moving: slide to a stop
 			tumble_velocity.y = 0.0
 			tumble_velocity.x *= exp(-3.0 * delta)
